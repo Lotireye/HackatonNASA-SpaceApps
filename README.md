@@ -22,9 +22,14 @@ Para tener mas contexto para que un satelite pueda aterrizar sobre la luna neces
 
 ## Datos sugeridos 
 Moon Trek -> https://trek.nasa.gov/moon/
+
 LRO -> https://pgda.gsfc.nasa.gov/products/
 
 ## Diagrama de Flujo
-![Diagrama de Flujo](Flujo.png)
+![Diagrama de Flujo](images/Flujo.png)
+
+## Importacion de Datos
+Hecho en pyton
+[Flujo de Importacion](images/FlujoImportacionDeDatos.png)
 
 
