@@ -64,27 +64,34 @@ class DemLoader:
         if not (b.left <= x <= b.right and b.bottom <= y <= b.top):
             raise DemError(f"{site.name}: el sitio cae fuera del DEM")
 
-        pix = float(src.res[0])                      # m/píxel (píxeles cuadrados)
-        col, row = ~src.transform * (x, y)           # píxel continuo, esquina sup-izq = 0
+        pix = float(src.res[0])  # m/píxel (píxeles cuadrados)
+        col, row = (~src.transform) @ (x, y)  # píxel continuo, esquina sup-izq = 0
         half = int(np.ceil(radius_km * 1000.0 / pix))
         col0, row0 = int(round(col)) - half, int(round(row)) - half
         size = 2 * half + 1
 
-        dem = src.read(1, window=Window(col0, row0, size, size),
-                       boundless=True, fill_value=np.nan).astype("float32")
+        dem = src.read(
+            1, window=Window(col0, row0, size, size), boundless=True, fill_value=np.nan
+        ).astype("float32")
         # pasamos a la convención "el centro del elemento [i, j] está en (j, i)"
         site_px = (col - 0.5 - col0, row - 0.5 - row0)
-        return DemPatch(site=site, elevation=dem, pixel_m=pix,
-                        site_px=site_px, radius_km=radius_km)
+        return DemPatch(
+            site=site, elevation=dem, pixel_m=pix, site_px=site_px, radius_km=radius_km
+        )
 
     # ---------- guardar / cargar (carpeta interim) ----------
     @staticmethod
     def save_patch(patch: DemPatch, path: Path) -> None:
         Path(path).parent.mkdir(parents=True, exist_ok=True)
         np.savez_compressed(
-            path, elevation=patch.elevation, pixel_m=patch.pixel_m,
-            site_px=np.array(patch.site_px), radius_km=patch.radius_km,
-            name=patch.site.name, lat=patch.site.lat, lon=patch.site.lon,
+            path,
+            elevation=patch.elevation,
+            pixel_m=patch.pixel_m,
+            site_px=np.array(patch.site_px),
+            radius_km=patch.radius_km,
+            name=patch.site.name,
+            lat=patch.site.lat,
+            lon=patch.site.lon,
             note=patch.site.note,
         )
 
@@ -92,10 +99,13 @@ class DemLoader:
     def load_patch(path: Path) -> DemPatch:
         d = np.load(path)
         site = Site(str(d["name"]), float(d["lat"]), float(d["lon"]), str(d["note"]))
-        return DemPatch(site=site, elevation=d["elevation"],
-                        pixel_m=float(d["pixel_m"]),
-                        site_px=(float(d["site_px"][0]), float(d["site_px"][1])),
-                        radius_km=float(d["radius_km"]))
+        return DemPatch(
+            site=site,
+            elevation=d["elevation"],
+            pixel_m=float(d["pixel_m"]),
+            site_px=(float(d["site_px"][0]), float(d["site_px"][1])),
+            radius_km=float(d["radius_km"]),
+        )
 
 
 if __name__ == "__main__":
@@ -107,7 +117,10 @@ if __name__ == "__main__":
         for s in SiteLoader().load(cfg.sites_file):
             p = dem.crop(s, cfg.radius_km)
             dem.save_patch(p, cfg.interim_dir / f"{s.name}.npz")
-            print(f"{s.name}: forma {p.elevation.shape}, "
-                  f"NaN {np.isnan(p.elevation).mean():.1%}, "
-                  f"altura del sitio {p.site_height:,.0f} m, "
-                  f"rango {np.nanmin(p.elevation):,.0f} a {np.nanmax(p.elevation):,.0f} m")
+            print(
+                f"{s.name}: forma {p.elevation.shape}, "
+                f"NaN {np.isnan(p.elevation).mean():.1%}, "
+                f"altura del sitio {p.site_height:,.0f} m, "
+                f"rango {np.nanmin(p.elevation):,.0f} a {np.nanmax(p.elevation):,.0f} m"
+            )
+
