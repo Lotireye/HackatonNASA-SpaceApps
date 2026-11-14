@@ -1,4 +1,38 @@
 [
-  {"name": "test-polo", "lat": -89.9, "lon": 0.0, "note": "punto de prueba, no oficial"},
-  {"name": "test-85a", "lat": -85.0, "lon": 0.0, "note": "punto de prueba, no oficial"}
+  {
+    "name": "Mons Malapert",
+    "lat": -85.98,
+    "lon": -1.67,
+    "note": "Centro del macizo (USGS Gazetteer, LOLA 2011). Región candidata Artemis III."
+  },
+  {
+    "name": "Haworth",
+    "lat": -86.9,
+    "lon": -4.0,
+    "note": "Centro del cráter, coordenadas aproximadas (Wikipedia). Región candidata Artemis III."
+  },
+  {
+    "name": "Shackleton",
+    "lat": -89.67,
+    "lon": 129.78,
+    "note": "Centro del cráter (Wikipedia). La coordenada IAU 89.9S 0E es imprecisa."
+  },
+  {
+    "name": "de Gerlache",
+    "lat": -88.5,
+    "lon": -87.1,
+    "note": "Centro del cráter (Wikipedia, ESA)."
+  },
+  {
+    "name": "Nobile",
+    "lat": -85.2,
+    "lon": 53.5,
+    "note": "Centro del cráter (IAU Transactions XXII B). Candidata Artemis III: Nobile Rim 1 y 2."
+  },
+  {
+    "name": "Cabeus B",
+    "lat": -82.4,
+    "lon": -53.0,
+    "note": "Ubicación aproximada del cráter Cabeus B (the-moon.us, nombre no oficial). Candidata Artemis III: Peak near Cabeus B."
+  }
 ]

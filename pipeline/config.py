@@ -20,6 +20,8 @@ class Config:
     radius_km: float = 40.0
     step_hours: float = 1.0
     n_azimuths: int = 360
+    start_utc: str = "2027-01-01T00:00:00"
+    days: int = 365
 
     @property
     def dem_path(self) -> Path:
