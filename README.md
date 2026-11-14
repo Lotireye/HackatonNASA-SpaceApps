@@ -41,23 +41,22 @@ LRO -> [https://pgda.gsfc.nasa.gov/products/]
 ## Importacion de Datos
 
 data/
-├─ sitios.json
-│
-├─ raw/
-│  ├─ dem/
-│  │  └─ LDEM_80S_40MPP_ADJ.TIF
-│  │
-│  └─ kernels/
-│     ├─ lsk/
-│     │  └─ naif0012.tls
-│     ├─ spk/
-│     │  └─ de440s.bsp
-│     ├─ pck/
-│     │  └─ moon_pa_de440_200625.bpc
-│     └─ fk/
-│        └─ moon_de440_250416.tf
-│
-└─ interim/
+|- sitios.json
+|
+|- raw/
+|  |- dem/
+|  |  |-LDEM_80S_40MPP_ADJ.TIF
+|  |
+|  |- kernels/
+|     |- lsk/
+|     |   |- naif0012.tls
+|     |- spk/
+|     |   |- de440s.bsp
+|     |- pck/
+|     |   |- moon_pa_de440_200625.bpc
+|     |- fk/
+|         |- moon_de440_250416.tf
+|- interim/
 
 - no se suben los kernels al repositorio para evitar subir archivos pesados
 - lsk: convierte el tiempo UTC a ET que es el tiempo entendido por SPICE

@@ -5,3 +5,5 @@ data/interim
 #configuracion de venv
 pyrightconfig.json
 
+__pycache__/
+*.pyc
