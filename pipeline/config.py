@@ -17,9 +17,12 @@ class Config:
         "kernels/pck/moon_pa_de440_200625.bpc",
         "kernels/fk/moon_de440_250416.tf",
     )
-    radius_km: float = 40.0
+    radius_km: float = 150.0
     step_hours: float = 1.0
     n_azimuths: int = 360
+    observer_height_m: float = 0.0
+    start_utc: str = "2027-01-01T00:00:00"
+    days: int = 365
 
     @property
     def dem_path(self) -> Path:

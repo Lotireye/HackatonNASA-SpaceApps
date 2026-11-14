@@ -1,0 +1,116 @@
+[
+ {
+  "name": "Mons Malapert",
+  "lat": -85.98,
+  "lon": -1.67,
+  "note": "Centro del macizo (USGS Gazetteer, LOLA 2011). Regi\u00f3n candidata Artemis III.",
+  "file": "sites/mons-malapert.json",
+  "metrics": {
+   "pct_sun": 35.73,
+   "pct_earth": 100.0,
+   "pct_both": 35.73,
+   "max_dark_h": 489.0,
+   "max_no_earth_h": 0.0,
+   "sun_energy_pct": 35.82,
+   "pct_sun_any": 37.31,
+   "pct_sun_full": 34.49,
+   "pct_earth_any": 100.0,
+   "pct_earth_full": 91.74
+  }
+ },
+ {
+  "name": "Haworth",
+  "lat": -86.9,
+  "lon": -4.0,
+  "note": "Centro del cr\u00e1ter, coordenadas aproximadas (Wikipedia). Regi\u00f3n candidata Artemis III.",
+  "file": "sites/haworth.json",
+  "metrics": {
+   "pct_sun": 0.0,
+   "pct_earth": 0.0,
+   "pct_both": 0.0,
+   "max_dark_h": 8760.0,
+   "max_no_earth_h": 8760.0,
+   "sun_energy_pct": 0.0,
+   "pct_sun_any": 0.0,
+   "pct_sun_full": 0.0,
+   "pct_earth_any": 0.0,
+   "pct_earth_full": 0.0
+  }
+ },
+ {
+  "name": "Shackleton",
+  "lat": -89.67,
+  "lon": 129.78,
+  "note": "Centro del cr\u00e1ter (Wikipedia). La coordenada IAU 89.9S 0E es imprecisa.",
+  "file": "sites/shackleton.json",
+  "metrics": {
+   "pct_sun": 0.0,
+   "pct_earth": 0.0,
+   "pct_both": 0.0,
+   "max_dark_h": 8760.0,
+   "max_no_earth_h": 8760.0,
+   "sun_energy_pct": 0.0,
+   "pct_sun_any": 0.0,
+   "pct_sun_full": 0.0,
+   "pct_earth_any": 0.0,
+   "pct_earth_full": 0.0
+  }
+ },
+ {
+  "name": "de Gerlache",
+  "lat": -88.5,
+  "lon": -87.1,
+  "note": "Centro del cr\u00e1ter (Wikipedia, ESA).",
+  "file": "sites/de-gerlache.json",
+  "metrics": {
+   "pct_sun": 0.0,
+   "pct_earth": 0.0,
+   "pct_both": 0.0,
+   "max_dark_h": 8760.0,
+   "max_no_earth_h": 8760.0,
+   "sun_energy_pct": 0.01,
+   "pct_sun_any": 0.11,
+   "pct_sun_full": 0.0,
+   "pct_earth_any": 0.0,
+   "pct_earth_full": 0.0
+  }
+ },
+ {
+  "name": "Nobile",
+  "lat": -85.2,
+  "lon": 53.5,
+  "note": "Centro del cr\u00e1ter (IAU Transactions XXII B). Candidata Artemis III: Nobile Rim 1 y 2.",
+  "file": "sites/nobile.json",
+  "metrics": {
+   "pct_sun": 32.17,
+   "pct_earth": 16.45,
+   "pct_both": 4.94,
+   "max_dark_h": 542.0,
+   "max_no_earth_h": 556.0,
+   "sun_energy_pct": 32.18,
+   "pct_sun_any": 33.7,
+   "pct_sun_full": 30.72,
+   "pct_earth_any": 23.65,
+   "pct_earth_full": 1.39
+  }
+ },
+ {
+  "name": "Cabeus B",
+  "lat": -82.4,
+  "lon": -53.0,
+  "note": "Ubicaci\u00f3n aproximada del cr\u00e1ter Cabeus B (the-moon.us, nombre no oficial). Candidata Artemis III: Peak near Cabeus B.",
+  "file": "sites/cabeus-b.json",
+  "metrics": {
+   "pct_sun": 6.02,
+   "pct_earth": 30.29,
+   "pct_both": 2.53,
+   "max_dark_h": 4922.0,
+   "max_no_earth_h": 458.0,
+   "sun_energy_pct": 6.12,
+   "pct_sun_any": 8.14,
+   "pct_sun_full": 4.1,
+   "pct_earth_any": 34.52,
+   "pct_earth_full": 25.72
+  }
+ }
+]

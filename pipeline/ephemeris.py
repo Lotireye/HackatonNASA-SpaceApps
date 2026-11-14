@@ -24,6 +24,7 @@ def local_basis(
 class Ephemeris:
     R_MOON_M = 1_737_400.0
     FRAME = "MOON_ME_DE440_ME421"
+    BODY_RADIUS_KM = {"SUN": 695_700.0, "EARTH": 6378.137}
 
     def __init__(self) -> None:
         if spice.namfrm(self.FRAME) == 0:
@@ -45,11 +46,13 @@ class Ephemeris:
         return [str(spice.et2utc(float(e), "ISOC", 0)) for e in ets]
 
     # ---------- cálculo ----------
-    def azel(self, target: str, site: Site, ets, height_m: float = 0.0) -> np.ndarray:
-        """Array (N, 2): columna 0 = azimut (0° N, 90° E), columna 1 = elevación (°)."""
+    def observe(
+        self, target: str, site: Site, ets, height_m: float = 0.0
+    ) -> np.ndarray:
+        """Array (N, 3): azimut (°), elevación (°) y distancia sitio -> astro (km)."""
         east, north, up = local_basis(site.lat, site.lon)
         r_site_km = up * (self.R_MOON_M + height_m) / 1000.0
-        out = np.empty((len(ets), 2))
+        out = np.empty((len(ets), 3))
         for k, et in enumerate(ets):
             t = float(et)
             pos, _ = spice.spkpos(target, t, "J2000", "LT+S", "MOON")
@@ -58,7 +61,19 @@ class Ephemeris:
             e, n, u = v @ east, v @ north, v @ up
             out[k, 0] = np.degrees(np.arctan2(e, n)) % 360.0
             out[k, 1] = np.degrees(np.arctan2(u, np.hypot(e, n)))
+            out[k, 2] = float(np.linalg.norm(v))
         return out
+
+    def azel(self, target: str, site: Site, ets, height_m: float = 0.0) -> np.ndarray:
+        """Array (N, 2): azimut y elevación del centro del disco."""
+        return self.observe(target, site, ets, height_m)[:, :2]
+
+    @classmethod
+    def angular_radius_deg(cls, target: str, dist_km) -> np.ndarray:
+        """Radio aparente del disco (°) a partir de la distancia real en cada instante."""
+        return np.degrees(
+            np.arcsin(cls.BODY_RADIUS_KM[target] / np.asarray(dist_km, dtype=float))
+        )
 
     def sun_azel(self, site: Site, ets, height_m: float = 0.0) -> np.ndarray:
         return self.azel("SUN", site, ets, height_m)

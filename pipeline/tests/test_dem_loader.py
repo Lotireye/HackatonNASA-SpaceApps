@@ -49,3 +49,12 @@ def test_guardar_y_cargar(tmp_path):
     q = DemLoader.load_patch(tmp_path / "t.npz")
     assert np.array_equal(p.elevation, q.elevation, equal_nan=True)
     assert q.site.name == "t" and q.site_px == p.site_px
+
+
+def test_limite_de_rayos_hacia_el_norte():
+    with DemLoader(CFG.dem_path) as dem:
+        s = Site("t", -85.0, 0.0)
+        x0, y0 = dem.lonlat_to_xy(s.lat, s.lon)
+        lim = dem.ray_limits_m(s, 360)
+        assert lim[0] == pytest.approx(dem.bounds.top - y0)  # azimut 0 con lon 0 = +y
+        assert lim.min() > 100_000  # a 85°S, 100 km caben en cualquier dirección
