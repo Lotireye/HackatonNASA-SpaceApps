@@ -10,7 +10,12 @@
    "pct_earth": 100.0,
    "pct_both": 35.73,
    "max_dark_h": 489.0,
-   "max_no_earth_h": 0.0
+   "max_no_earth_h": 0.0,
+   "sun_energy_pct": 35.82,
+   "pct_sun_any": 37.31,
+   "pct_sun_full": 34.49,
+   "pct_earth_any": 100.0,
+   "pct_earth_full": 91.74
   }
  },
  {
@@ -24,7 +29,12 @@
    "pct_earth": 0.0,
    "pct_both": 0.0,
    "max_dark_h": 8760.0,
-   "max_no_earth_h": 8760.0
+   "max_no_earth_h": 8760.0,
+   "sun_energy_pct": 0.0,
+   "pct_sun_any": 0.0,
+   "pct_sun_full": 0.0,
+   "pct_earth_any": 0.0,
+   "pct_earth_full": 0.0
   }
  },
  {
@@ -38,7 +48,12 @@
    "pct_earth": 0.0,
    "pct_both": 0.0,
    "max_dark_h": 8760.0,
-   "max_no_earth_h": 8760.0
+   "max_no_earth_h": 8760.0,
+   "sun_energy_pct": 0.0,
+   "pct_sun_any": 0.0,
+   "pct_sun_full": 0.0,
+   "pct_earth_any": 0.0,
+   "pct_earth_full": 0.0
   }
  },
  {
@@ -52,7 +67,12 @@
    "pct_earth": 0.0,
    "pct_both": 0.0,
    "max_dark_h": 8760.0,
-   "max_no_earth_h": 8760.0
+   "max_no_earth_h": 8760.0,
+   "sun_energy_pct": 0.01,
+   "pct_sun_any": 0.11,
+   "pct_sun_full": 0.0,
+   "pct_earth_any": 0.0,
+   "pct_earth_full": 0.0
   }
  },
  {
@@ -62,11 +82,16 @@
   "note": "Centro del cr\u00e1ter (IAU Transactions XXII B). Candidata Artemis III: Nobile Rim 1 y 2.",
   "file": "sites/nobile.json",
   "metrics": {
-   "pct_sun": 32.53,
+   "pct_sun": 32.17,
    "pct_earth": 16.45,
-   "pct_both": 5.1,
-   "max_dark_h": 536.0,
-   "max_no_earth_h": 556.0
+   "pct_both": 4.94,
+   "max_dark_h": 542.0,
+   "max_no_earth_h": 556.0,
+   "sun_energy_pct": 32.18,
+   "pct_sun_any": 33.7,
+   "pct_sun_full": 30.72,
+   "pct_earth_any": 23.65,
+   "pct_earth_full": 1.39
   }
  },
  {
@@ -80,7 +105,12 @@
    "pct_earth": 30.29,
    "pct_both": 2.53,
    "max_dark_h": 4922.0,
-   "max_no_earth_h": 458.0
+   "max_no_earth_h": 458.0,
+   "sun_energy_pct": 6.12,
+   "pct_sun_any": 8.14,
+   "pct_sun_full": 4.1,
+   "pct_earth_any": 34.52,
+   "pct_earth_full": 25.72
   }
  }
 ]

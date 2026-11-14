@@ -72,3 +72,51 @@ def test_horizonte_plano_en_el_polo_da_cerca_de_la_mitad():
     assert 40 < m["pct_sun"] < 60
     assert 40 < m["pct_earth"] < 60
     assert m["pct_both"] <= min(m["pct_sun"], m["pct_earth"])
+
+
+def test_fraccion_sobre_y_bajo_el_horizonte():
+    calc = MetricsCalculator()
+    assert calc.visible_fraction(np.array([[0.0, 5.0]]), _plano(), 1.0)[
+        0
+    ] == pytest.approx(1.0)
+    assert calc.visible_fraction(np.array([[0.0, -5.0]]), _plano(), 1.0)[
+        0
+    ] == pytest.approx(0.0)
+
+
+def test_fraccion_con_el_centro_justo_en_el_horizonte():
+    f = MetricsCalculator().visible_fraction(np.array([[0.0, 0.0]]), _plano(), 1.0)
+    assert f[0] == pytest.approx(0.5, abs=1e-6)
+
+
+def test_fraccion_segmento_circular():
+    # horizonte a 0.5° y disco de radio 1° centrado en 0°: área sobre la recta / área del disco
+    m = HorizonMask(SITE, np.full(360, 0.5))
+    f = MetricsCalculator().visible_fraction(np.array([[0.0, 0.0]]), m, 1.0)
+    esperado = (np.arccos(0.5) - 0.5 * np.sqrt(0.75)) / np.pi  # ≈ 0.1955
+    assert f[0] == pytest.approx(esperado, abs=0.01)
+
+
+def test_fraccion_acepta_un_radio_por_instante():
+    azel = np.array([[0.0, 0.0], [0.0, 0.0]])
+    f = MetricsCalculator().visible_fraction(azel, _plano(), np.array([0.3, 1.0]))
+    assert np.allclose(f, 0.5, atol=1e-6)
+
+
+def test_radio_cero_equivale_al_centro():
+    azel = np.array([[0.0, 0.1], [0.0, -0.1]])
+    assert MetricsCalculator().visible_fraction(azel, _plano(), 0.0).tolist() == [
+        1.0,
+        0.0,
+    ]
+
+
+def test_summarize_disk():
+    m = MetricsCalculator().summarize_disk([1.0, 0.5, 0.0, 0.0], [1.0, 1.0, 0.2, 0.0])
+    assert m == {
+        "sun_energy_pct": 37.5,
+        "pct_sun_any": 50.0,
+        "pct_sun_full": 25.0,
+        "pct_earth_any": 75.0,
+        "pct_earth_full": 50.0,
+    }

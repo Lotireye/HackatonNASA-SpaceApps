@@ -5,7 +5,7 @@ import rasterio
 from pyproj import CRS, Transformer
 from rasterio.io import DatasetReader
 from rasterio.windows import Window
-
+from .horizon import azimuth_dir_xy
 from .models import DemPatch, Site
 
 
@@ -59,6 +59,26 @@ class DemLoader:
         _, to_xy = self._require_open()
         x, y = to_xy.transform(lon, lat)
         return float(x), float(y)
+
+    def ray_limits_m(self, site: Site, n_az: int = 360) -> np.ndarray:
+        """Distancia (m) que puede recorrer cada rayo antes de salir del DEM."""
+        x0, y0 = self.lonlat_to_xy(site.lat, site.lon)
+        b = self.bounds
+        out = np.empty(n_az)
+        for k in range(n_az):
+            dx, dy = azimuth_dir_xy(k * 360.0 / n_az, site.lon)
+            tx = (
+                np.inf
+                if abs(dx) < 1e-12
+                else ((b.right - x0) if dx > 0 else (b.left - x0)) / dx
+            )
+            ty = (
+                np.inf
+                if abs(dy) < 1e-12
+                else ((b.top - y0) if dy > 0 else (b.bottom - y0)) / dy
+            )
+            out[k] = min(tx, ty)
+        return out
 
     # ---------- recorte ----------
     def crop(self, site: Site, radius_km: float = 40.0) -> DemPatch:

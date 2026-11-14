@@ -70,7 +70,7 @@ def test_pipeline_escribe_json_consistente(tmp_path):
     assert len(index) >= 1
     for entry in index:
         d = json.loads((out / entry["file"]).read_text())
-        assert d["n"] == 240 and len(d["horizon"]) == 360
+        assert d["n"] == 240 and len(d["horizon"]) == CFG.n_azimuths
         for b in ("sun", "earth"):
             assert len(d[b]["az"]) == len(d[b]["el"]) == len(d[b]["visible"]) == 240
         m = d["metrics"]

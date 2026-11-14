@@ -31,18 +31,23 @@ class SiteResult:
     earth_visible: np.ndarray
     metrics: dict
     meta: dict = field(default_factory=dict)
+    sun_fraction: np.ndarray | None = None
+    earth_fraction: np.ndarray | None = None
 
     @property
     def filename(self) -> str:
         return f"{slug(self.site.name)}.json"
 
     def to_dict(self) -> dict:
-        def body(azel, vis):
-            return {
+        def body(azel, vis, frac=None):
+            d = {
                 "az": _r(azel[:, 0]),
                 "el": _r(azel[:, 1]),
                 "visible": np.asarray(vis, dtype=int).tolist(),
             }
+            if frac is not None:
+                d["fraction"] = _r(frac, 2)
+            return d
 
         return {
             "schema": SCHEMA,
@@ -56,8 +61,8 @@ class SiteResult:
             "step_h": self.step_h,
             "n": int(len(self.sun_visible)),
             "horizon": self.horizon.to_list(),
-            "sun": body(self.sun_azel, self.sun_visible),
-            "earth": body(self.earth_azel, self.earth_visible),
+            "sun": body(self.sun_azel, self.sun_visible, self.sun_fraction),
+            "earth": body(self.earth_azel, self.earth_visible, self.earth_fraction),
             "metrics": self.metrics,
             "meta": self.meta,
         }

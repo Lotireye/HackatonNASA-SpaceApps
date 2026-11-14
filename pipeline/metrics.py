@@ -44,3 +44,42 @@ class MetricsCalculator:
             "max_dark_h": round(longest_run(~sun) * step_h, 2),
             "max_no_earth_h": round(longest_run(~earth) * step_h, 2),
         }
+
+    def visible_fraction(
+        self, azel: np.ndarray, mask: HorizonMask, radius_deg, n_cols: int = 41
+    ) -> np.ndarray:
+        """Fracción (0 a 1) del disco por encima del horizonte, en cada instante.
+
+        radius_deg: radio aparente en grados (un valor, o un arreglo con uno por instante).
+        """
+        r = np.broadcast_to(np.asarray(radius_deg, dtype=float), (len(azel),))
+        if np.all(r <= 0):
+            return (azel[:, 1] > self._horizon(azel, mask)).astype(float)
+        k = (np.arange(n_cols) + 0.5) / n_cols * 2.0 - 1.0  # franjas en [-1, 1]
+        u = r[:, None] * k[None, :]  # (T, K) desplazamiento horizontal (°)
+        w = np.sqrt(np.maximum(r[:, None] ** 2 - u**2, 0.0))  # semicuerda vertical (°)
+        el_c = azel[:, 1][:, None]
+        az_k = azel[:, 0][:, None] + u / np.cos(
+            np.radians(el_c)
+        )  # azimut de cada franja
+        h = np.asarray(mask.elevation_at(az_k), dtype=float)
+        h = np.where(np.isfinite(h), h, 0.0)
+        vis = np.clip(el_c + w - np.maximum(h, el_c - w), 0.0, 2.0 * w)
+        return vis.sum(axis=1) / np.maximum((2.0 * w).sum(axis=1), 1e-12)
+
+    def summarize_disk(self, sun_frac, earth_frac) -> dict:
+        sf, ef = np.asarray(sun_frac, dtype=float), np.asarray(earth_frac, dtype=float)
+        eps = 1e-9
+        return {
+            "sun_energy_pct": round(
+                float(sf.mean() * 100.0), 2
+            ),  # luz recibida, proporcional al disco visible
+            "pct_sun_any": round(
+                self.percent(sf > eps), 2
+            ),  # al menos un pedazo del Sol
+            "pct_sun_full": round(self.percent(sf > 1 - eps), 2),  # Sol completo
+            "pct_earth_any": round(
+                self.percent(ef > eps), 2
+            ),  # al menos un pedazo de la Tierra
+            "pct_earth_full": round(self.percent(ef > 1 - eps), 2),  # Tierra completa
+        }

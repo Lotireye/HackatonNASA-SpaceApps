@@ -69,3 +69,24 @@ def test_tierra_oscila_por_la_libracion(year):
 def test_tierra_sobre_el_horizonte_casi_la_mitad(year):
     _, earth = year
     assert 0.40 < (earth[:, 1] > 0).mean() < 0.60
+
+
+@necesita_kernels
+def test_radios_angulares_del_sol_y_la_tierra(eph):
+    ets = Ephemeris.time_grid("2027-01-01T00:00:00", 366, 6.0)
+    sol = Ephemeris.angular_radius_deg("SUN", eph.observe("SUN", POLO, ets)[:, 2])
+    tierra = Ephemeris.angular_radius_deg(
+        "EARTH", eph.observe("EARTH", POLO, ets)[:, 2]
+    )
+    assert (
+        0.258 < sol.min() and sol.max() < 0.275
+    )  # ~0.262° en el afelio, ~0.271° en el perihelio
+    assert (
+        0.85 < tierra.min() and tierra.max() < 1.1
+    )  # ~0.90° en el apogeo, ~1.03° en el perigeo
+
+
+@necesita_kernels
+def test_azel_es_la_parte_angular_de_observe(eph):
+    ets = Ephemeris.time_grid("2027-01-01T00:00:00", 2, 1.0)
+    assert np.array_equal(eph.sun_azel(POLO, ets), eph.observe("SUN", POLO, ets)[:, :2])
