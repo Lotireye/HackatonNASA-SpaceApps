@@ -46,7 +46,7 @@ class SiteResult:
                 "visible": np.asarray(vis, dtype=int).tolist(),
             }
             if frac is not None:
-                d["fraction"] = _r(frac, 2)
+                d["fraction"] = _r(frac, 4)
             return d
 
         return {
