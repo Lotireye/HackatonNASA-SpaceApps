@@ -24,7 +24,8 @@ def main() -> None:
     )
     a = ap.parse_args()
 
-    cfg = Config() if a.days is None else replace(Config(), days=a.days)
+    over = {"days": a.days, "dem_file": a.dem}
+    cfg = replace(Config(), **{k: v for k, v in over.items() if v is not None})
     calc = MetricsCalculator()
     with DataImporter(cfg).import_all() as data:
         por_nombre = {s.name.lower(): s for s in data.sites}
