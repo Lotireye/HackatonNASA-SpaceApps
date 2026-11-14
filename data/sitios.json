@@ -1,0 +1,4 @@
+[
+  {"name": "test-polo", "lat": -89.9, "lon": 0.0, "note": "punto de prueba, no oficial"},
+  {"name": "test-85a", "lat": -85.0, "lon": 0.0, "note": "punto de prueba, no oficial"}
+]

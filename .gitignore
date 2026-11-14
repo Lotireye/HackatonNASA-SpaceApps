@@ -1,3 +1,7 @@
 # Data recien importada sin procesar
+data/raw
+data/interim
 
+#configuracion de venv
+pyrightconfig.json
 
