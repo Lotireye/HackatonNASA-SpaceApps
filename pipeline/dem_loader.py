@@ -51,6 +51,10 @@ class DemLoader:
     def bounds(self):
         return self._require_open()[0].bounds
 
+    @property
+    def pixel_m(self) -> float:
+        return float(self._require_open()[0].res[0])
+
     def lonlat_to_xy(self, lat: float, lon: float) -> tuple[float, float]:
         _, to_xy = self._require_open()
         x, y = to_xy.transform(lon, lat)
@@ -123,4 +127,3 @@ if __name__ == "__main__":
                 f"altura del sitio {p.site_height:,.0f} m, "
                 f"rango {np.nanmin(p.elevation):,.0f} a {np.nanmax(p.elevation):,.0f} m"
             )
-
