@@ -1,95 +1,111 @@
 <!doctype html>
 <html lang="es">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Lunar Landing Site Navigator</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lunar Landing Site Navigator</title>
+<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <header class="top">
-    <h1>Lunar Landing Site Navigator</h1>
-    <p>Polo sur de la Luna: cuánta luz solar y cuánta comunicación directa con la Tierra tiene un sitio en las fechas que elijas.</p>
-  </header>
+<header class="top">
+  <b>🌓 Lunar Landing Site Navigator</b>
+  <button id="open-cmp" class="link" type="button">⚖️ Comparar sitios</button>
+</header>
 
-  <div class="controls">
-    <label>Sitio
-      <select id="site"></select>
-    </label>
-    <label>Desde
-      <input type="date" id="from">
-    </label>
-    <label>Hasta
-      <input type="date" id="to">
-    </label>
-    <button type="button" id="reset">Todo el periodo</button>
+<section class="hero">
+  <h1>Navegador de sitios de alunizaje: Polo Sur Lunar</h1>
+  <p>Evalúa la disponibilidad de energía solar y comunicación directa con la Tierra en las regiones candidatas de Artemis.</p>
+  <a class="cta" href="#explorer">Seleccionar sitio de aterrizaje ↓</a>
+</section>
+
+<main>
+  <p id="error" class="error" hidden></p>
+
+  <section id="explorer" class="explorer">
+    <div class="box"><svg id="map" viewBox="0 0 600 600" role="img" aria-label="Mapa polar del polo sur lunar con los sitios candidatos"></svg></div>
+    <aside class="box side">
+      <h2 id="s-name"></h2>
+      <p id="s-info" class="muted"></p>
+      <p id="s-note" class="muted"></p>
+      <div class="period-filters">
+
+  <div class="filter-heading">
+    <span>📅 Periodo de análisis</span>
+    <small>Selecciona el año y el mes</small>
   </div>
-  <p id="site-info" class="site-info"></p>
+  <div class="filter-selects">
+    <label>
+      Año
+      <select id="year" aria-label="Seleccionar año">
+        <option value="all">Todos los años</option>
+      </select>
+    </label>
 
-  <div id="error" class="error" role="alert" hidden></div>
-
-  <main class="layout">
-    <section class="pano" id="panorama" aria-label="Panorama del horizonte">
-      <div id="pano-svg" class="pano-svg"></div>
-      <div class="time">
-        <button type="button" id="play">Reproducir</button>
-        <input type="range" id="t" min="0" max="0" value="0" aria-label="Momento a mostrar">
-        <output id="t-label" for="t">–</output>
-      </div>
-      <div class="chips">
-        <span class="chip sun" id="chip-sun">Sol: –</span>
-        <span class="chip earth" id="chip-earth">Tierra: –</span>
-      </div>
-    </section>
-
-    <section class="metrics" aria-label="Métricas del rango elegido">
-      <div class="block sun">
-        <h2>Luz solar</h2>
-        <p class="big"><span id="sun-energy">–</span></p>
-        <p class="hint">del tiempo, midiendo el disco real del Sol sobre el horizonte</p>
-        <dl>
-          <div><dt>Centro del Sol visible</dt><dd id="sun-center">–</dd></div>
-          <div><dt>Noche más larga</dt><dd id="max-dark">–</dd></div>
-        </dl>
-      </div>
-
-      <div class="block earth">
-        <h2>Comunicación con la Tierra</h2>
-        <p class="big"><span id="earth-full">–</span> <span class="to">a</span> <span id="earth-any">–</span></p>
-        <p class="hint">entre Tierra completa visible y algún pedazo visible; depende de la antena</p>
-        <div class="range" id="earth-range" aria-hidden="true">
-          <span class="solid"></span><span class="part"></span><span class="tick"></span>
-        </div>
-        <ul class="legend">
-          <li>Completa <b id="l-full">–</b></li>
-          <li>Centro del disco <b id="l-center">–</b></li>
-          <li>Algún pedazo <b id="l-any">–</b></li>
-        </ul>
-        <dl>
-          <div><dt>Periodo más largo sin Tierra</dt><dd id="max-no-earth">–</dd></div>
-        </dl>
-      </div>
-
-      <div class="block both">
-        <h2>Sol y Tierra a la vez</h2>
-        <p class="big"><span id="both">–</span></p>
-        <p class="hint">criterio del centro de cada disco</p>
-      </div>
-    </section>
-  </main>
-
-  <section class="timeline" aria-label="Línea de tiempo del rango elegido">
-    <h2>Línea de tiempo</h2>
-    <p class="hint">Cuanto más intenso el color, más del disco está sobre el horizonte. Haz clic o arrastra para mover el momento del panorama.</p>
-    <div id="timeline" class="timeline-canvas"></div>
+    <label>
+      Mes
+      <select id="month" aria-label="Seleccionar mes">
+        <option value="all">Todos los meses</option>
+      </select>
+    </label>
+  </div>
+  <div class="filter-dates">
+    <span>Rango de fechas</span>
+    <div class="dates">
+      <label>
+        Desde
+        <input type="date" id="start">
+      </label>
+      <label>
+        Hasta
+        <input type="date" id="end">
+      </label>
+    </div>
+  </div>
+</div>
+<a class="cta small" href="#dash">Analizar sitio ↓</a> 
+    </aside>
   </section>
+  <section id="dash">
+    <div class="bar">
+      <span id="active"></span>
+      <label class="switch"><span>👁️ Explorador</span><input type="checkbox" id="sci"><i></i><span>🔬 Científica</span></label>
+      <button id="cmp" class="link" type="button">⚖️ Comparar con otro sitio</button>
+    </div>
+    <div id="kpis" class="kpis"></div>
+    <div class="box">
+      <h3>Panorama de horizonte</h3>
+      <div id="panorama"></div>
+      <div class="legend"><span class="k sun">Sol</span><span class="k earth">Tierra</span><span class="k terrain">Terreno</span>
+        <span class="muted">Marcador hueco = tapado por el terreno. Tamaños no a escala. Línea fina = próximos 30 días.</span></div>
+    </div>
+    <div class="box">
+      <h3>Línea de tiempo y simulador</h3>
+      <div class="tlwrap"><div class="tllab"><span>☀️ Luz solar</span><span>🌍 Tierra</span></div>
+        <svg id="tl" viewBox="0 0 1000 44" preserveAspectRatio="none" role="img" aria-label="Disponibilidad de luz solar y comunicación con la Tierra en el rango elegido"></svg></div>
+      <div class="timebar"><button id="play" class="round" type="button" aria-label="Reproducir">▶</button>
+        <input id="time" type="range" step="1" value="0"><output id="when"></output></div>
+      <p id="now" class="muted"></p>
+    </div>
+    <div id="science" class="box sci"></div>
+  </section>
+</main>
 
-  <p id="range-note" class="note" hidden></p>
-  <p id="meta" class="meta"></p>
+<dialog id="dlg"><form method="dialog">
+  <h3>Comparar sitios (mismo rango de fechas)</h3>
+  <label>Con <select id="cmp-b"></select></label>
+  <table id="cmp-t"></table>
+  <button class="cta small">Cerrar</button>
+</form></dialog>
 
-  <script type="module" src="js/main.js"></script>
+<script>
+addEventListener("error", (e) => {
+  const p = document.getElementById("error");
+  if (!p) return;
+  p.textContent = e.message ? `Error de JavaScript: ${e.message}` : `No se pudo cargar: ${(e.target && (e.target.src || e.target.href)) || "un archivo"}`;
+  p.hidden = false;
+}, true);
+</script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<script type="module" src="js/main.js"></script>
 </body>
 </html>

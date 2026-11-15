@@ -1,223 +1,259 @@
-import { loadIndex, loadSite, rangeToIndices, dateBounds, metricsForRange, compareWithPython } from "./data.js";
-import { Panorama } from "./polar.js";
-import { Timeline } from "./timeline.js";
-
-const MIN_DAYS_NOTE = 90; // por debajo de esto avisamos que las cifras no son concluyentes
+import { loadIndex, loadSite, timeOf, fmtUTC, dateBounds, rangeToIndices, metrics, fmt } from "./data.js";
+import { createPanorama } from "./polar.js";
+import { createMap } from "./map.js";
+import { createTimeline } from "./timeline.js";
+import { createCompare } from "./compare.js";
 
 const $ = (id) => document.getElementById(id);
-const fmt = (v, d = 1) => v.toLocaleString("es", { minimumFractionDigits: d, maximumFractionDigits: d });
-const pct = (v) => (v == null ? "–" : `${fmt(v)}%`);
-const hours = (h) => (h == null ? "–" : h >= 48 ? `${fmt(h, 0)} h (${fmt(h / 24)} días)` : `${fmt(h, 0)} h`);
+const S = { sites: [], cur: null, a: 0, b: 0, i: 0, timer: null, min: "", max: "" };
+let pano, map, timeline, compare;
 
-const state = { index: [], cache: new Map(), data: null, bounds: null, range: [0, 0], t: 0, timer: null, pano: null, timeline: null };
+const MES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+const lastDay = (y, m) => new Date(Date.UTC(y, m, 0)).getUTCDate();   // m = 1..12
+const clamp = (d) => (d < S.min ? S.min : d > S.max ? S.max : d);   // fechas ISO: se comparan como texto
+const pad = (n) => String(n).padStart(2, "0");
 
-// ---- tiempo: deslizador, reproducción y estado actual de Sol y Tierra ----
-const FRAME_HOURS = 6; // cuánto avanza cada cuadro al reproducir
+function periodRange(y, m = 0) {
+  const start = m
+    ? `${y}-${pad(m)}-01`
+    : `${y}-01-01`;
 
-function fmtTime(d, i) {
-  const ms = Date.parse(d.t0) + i * d.step_h * 3600e3;
-  return `${new Date(ms).toISOString().replace("T", " ").slice(0, 16)} UTC`;
+  const end = m
+    ? `${y}-${pad(m)}-${lastDay(y, m)}`
+    : `${y}-12-31`;
+
+  return [clamp(start), clamp(end)];
 }
 
-function bodyText(name, b, i) {
-  const f = b.fraction ? b.fraction[i] : b.visible[i] ? 1 : 0;
-  const estado = f >= 0.9999 ? "completo" : f > 0 ? "parcial" : "oculto";
-  return `${name}: ${estado}, azimut ${fmt(b.az[i], 0)}°, elevación ${fmt(b.el[i])}°`;
+function updateMonthAvailability(year) {
+  const select = $("month");
+
+  select.disabled = year === "all" || year === "custom";
+
+  for (const option of select.options) {
+    if (!/^\d+$/.test(option.value)) continue;
+
+    const m = Number(option.value);
+    const start = `${year}-${pad(m)}-01`;
+    const end = `${year}-${pad(m)}-${lastDay(Number(year), m)}`;
+
+    option.disabled = end < S.min || start > S.max;
+  }
 }
 
-function drawTime() {
-  const d = state.data;
-  if (!d) return;
-  state.pano.setTime(state.t);
-  state.timeline.setTime(state.t);
-  $("t").value = state.t;
-  $("t-label").textContent = fmtTime(d, state.t);
-  $("chip-sun").textContent = bodyText("Sol", d.sun, state.t);
-  $("chip-earth").textContent = bodyText("Tierra", d.earth, state.t);
-}
+function syncPeriodSelectors() {
+  const start = $("start").value;
+  const end = $("end").value;
 
-function syncTime(i0, i1) {
-  const slider = $("t");
-  slider.min = i0;
-  slider.max = i1 - 1;
-  if (state.t < i0 || state.t >= i1) state.t = i0;
-  drawTime();
-}
-
-function stop() {
-  if (state.timer) clearInterval(state.timer);
-  state.timer = null;
-  $("play").textContent = "Reproducir";
-}
-
-function togglePlay() {
-  if (state.timer) return stop();
-  if (!state.data) return;
-  $("play").textContent = "Pausar";
-  state.timer = setInterval(() => {
-    const [i0, i1] = state.range;
-    const k = Math.max(1, Math.round(FRAME_HOURS / state.data.step_h));
-    state.t = state.t + k >= i1 ? i0 : state.t + k;
-    drawTime();
-  }, 90);
-}
-
-function showError(msg) {
-  const el = $("error");
-  el.textContent = msg;
-  el.hidden = !msg;
-}
-
-function latLon(site) {
-  const ns = site.lat < 0 ? "S" : "N";
-  const ew = site.lon < 0 ? "O" : "E";
-  return `${fmt(Math.abs(site.lat), 2)}°${ns}, ${fmt(Math.abs(site.lon), 2)}°${ew}`;
-}
-
-async function selectSite(i) {
-  const entry = state.index[i];
-  showError("");
-  try {
-    if (!state.cache.has(entry.file)) {
-      const d = await loadSite(entry.file);
-      state.cache.set(entry.file, d);
-      // Chequeo de consistencia: JS vs Python con el rango completo.
-      const diffs = compareWithPython(d);
-      if (diffs.length) console.warn(`[${d.site.name}] las métricas de JS no coinciden con las de Python:`, diffs);
-      else console.info(`[${d.site.name}] métricas de JS = Python (rango completo)`);
-    }
-  } catch (err) {
-    showError(err.message);
+  // Todo el periodo
+  if (start === S.min && end === S.max) {
+    $("year").value = "all";
+    $("month").value = "all";
+    updateMonthAvailability("all");
     return;
   }
-  state.data = state.cache.get(entry.file);
-  state.bounds = dateBounds(state.data);
-  stop();
-  state.pano.setSite(state.data);
-  state.t = 0;
 
-  const [min, max] = state.bounds;
-  for (const id of ["from", "to"]) {
-    $(id).min = min;
-    $(id).max = max;
+  const [y0] = S.min.split("-").map(Number);
+  const [y1] = S.max.split("-").map(Number);
+
+  // Buscar si coincide con un año completo
+  for (let y = y0; y <= y1; y++) {
+    const [s, e] = periodRange(y);
+
+    if (start === s && end === e) {
+      $("year").value = String(y);
+      $("month").value = "all";
+      updateMonthAvailability(y);
+      return;
+    }
   }
-  $("from").value = min;
-  $("to").value = max;
 
-  $("site-info").textContent = [latLon(state.data.site), state.data.site.note].filter(Boolean).join(". ");
+  // Buscar si coincide con un mes completo
+  for (let y = y0; y <= y1; y++) {
+    for (let m = 1; m <= 12; m++) {
+      const [s, e] = periodRange(y, m);
+
+      if (start === s && end === e) {
+        $("year").value = String(y);
+        $("month").value = String(m);
+        updateMonthAvailability(y);
+        return;
+      }
+    }
+  }
+
+  // Rango personalizado
+  $("year").value = "custom";
+  $("month").value = "custom";
+  updateMonthAvailability("custom");
+}
+function setRange(s, e) { $("start").value = clamp(s); $("end").value = clamp(e); applyRange(); }
+// Umbrales de nivel: referencia visual propia, no un estándar de misión
+const level = (v, hi, mid) => (v >= hi ? ["Alto", "ok"] : v >= mid ? ["Medio", "mid"] : ["Crítico", "bad"]);
+
+function showError(msg) { $("error").textContent = msg; $("error").hidden = false; }
+const metricsOf = (site) => { const [a, b] = rangeToIndices(site, $("start").value, $("end").value); return metrics(site, a, b); };
+
+function pick(site) {
+  S.cur = site;
+  map.select(site);
+  $("s-name").textContent = site.site.name;
+  $("s-info").textContent = `lat ${site.site.lat}° · lon ${site.site.lon}° · altura del terreno ${site.meta.site_height_m} m`;
+  $("s-note").textContent = site.site.note;
+  pano.setSite(site);
+  applyRange();
+}
+
+function applyRange() {
+  const [a, b] = rangeToIndices(S.cur, $("start").value, $("end").value);
+  if (!(b > a)) return showError("El rango de fechas no es válido: revisa Desde y Hasta.");
+  syncPeriodSelectors();
+  $("error").hidden = true;
+  S.a = a; S.b = b; S.i = Math.min(Math.max(S.i, a), b - 1);
+  const t = $("time"); t.min = a; t.max = b - 1; t.value = S.i;
+  $("active").textContent = `${S.cur.site.name} · ${$("start").value} → ${$("end").value}`;
+  const m = metrics(S.cur, a, b);
+  kpis(m); science(m);
+  timeline.draw(S.cur, a, b);
   render();
 }
 
-function render() {
-  const d = state.data;
-  if (!d) return;
+const card = (ic, t, v, s, l, c) => `<div class="card"><span class="ic">${ic}</span><div><small>${t}</small><strong>${v}</strong><span class="muted">${s}</span></div>${l ? `<em class="lv ${c}">${l}</em>` : ""}</div>`;
 
-  const from = $("from").value;
-  const to = $("to").value;
-  const note = $("range-note");
-
-  if (from && to && from > to) {
-    note.textContent = "La fecha final es anterior a la inicial. Cambia una de las dos.";
-    note.hidden = false;
-    return;
-  }
-
-  const [i0, i1] = rangeToIndices(d, from, to);
-  const m = metricsForRange(d, i0, i1);
-  if (!m) {
-    note.textContent = "No hay datos en ese rango.";
-    note.hidden = false;
-    return;
-  }
-
-  state.range = [i0, i1];
-  state.timeline.setRange(d, i0, i1);
-  syncTime(i0, i1);
-
-  const days = ((i1 - i0) * d.step_h) / 24;
-  note.hidden = days >= MIN_DAYS_NOTE;
-  if (days < MIN_DAYS_NOTE) {
-    note.textContent = `El rango es de ${fmt(days, 0)} días. Con ventanas cortas las cifras cambian mucho según la época; para comparar sitios usa al menos ${MIN_DAYS_NOTE} días.`;
-  }
-
-  // Luz solar
-  $("sun-energy").textContent = pct(m.sun_energy_pct ?? m.pct_sun);
-  $("sun-center").textContent = pct(m.pct_sun);
-  $("max-dark").textContent = hours(m.max_dark_h);
-
-  // Tierra como rango: completa / centro / algún pedazo
-  const eFull = m.pct_earth_full ?? m.pct_earth;
-  const eAny = m.pct_earth_any ?? m.pct_earth;
-  $("earth-full").textContent = pct(eFull);
-  $("earth-any").textContent = pct(eAny);
-  $("l-full").textContent = pct(eFull);
-  $("l-center").textContent = pct(m.pct_earth);
-  $("l-any").textContent = pct(eAny);
-  const bar = $("earth-range");
-  bar.style.setProperty("--full", `${eFull}%`);
-  bar.style.setProperty("--any", `${eAny}%`);
-  bar.style.setProperty("--center", `${m.pct_earth}%`);
-  $("max-no-earth").textContent = hours(m.max_no_earth_h);
-
-  // Ambos
-  $("both").textContent = pct(m.pct_both);
-
-  // Transparencia del cálculo
-  const meta = d.meta;
-  let text = `DEM de ${meta.pixel_m} m, radio de ${fmt(meta.radius_km, 0)} km, observador a ${fmt(meta.observer_height_m, 0)} m sobre el suelo. Paso de ${fmt(d.step_h, 0)} h.`;
-  const meta$ = $("meta");
-  meta$.textContent = text;
-  const warns = [];
-  if (meta.truncated_pct > 0) warns.push(`El ${fmt(meta.truncated_pct)}% de los rayos del horizonte sale del mapa; las cifras de luz y Tierra pueden estar sobreestimadas.`);
-  if (meta.horizon_gaps > 0) warns.push(`Hay ${meta.horizon_gaps} azimuts sin dato de terreno.`);
-  for (const w of warns) {
-    const s = document.createElement("span");
-    s.className = "warn";
-    s.textContent = w;
-    meta$.appendChild(s);
-  }
+function kpis(m) {
+  const sun = m.sun_energy_pct ?? m.pct_sun, [ls, cs] = level(sun, 30, 10), [le, ce] = level(m.pct_earth, 80, 30);
+  $("kpis").innerHTML =
+    card("☀️", "Luz solar disponible", `${fmt(sun)}%`, "del periodo seleccionado", ls, cs) +
+    card("🌍", "Conexión con la Tierra", `${fmt(m.pct_earth)}%`, m.pct_earth_full != null ? `visibilidad directa · disco completo ${fmt(m.pct_earth_full)}%` : "visibilidad directa", le, ce) +
+    card("🌙", "Noche continua máxima", `${fmt(m.max_dark_h, 0)} h`, `≈ ${fmt(m.max_dark_h / 24, 0)} días sin luz solar`);
 }
+
+function science(m) {
+  const s = S.cur, row = (l, v) => `<tr><td>${l}</td><td>${fmt(v)} %</td></tr>`, txt = (l, v) => `<tr><td>${l}</td><td>${v}</td></tr>`;
+  $("science").innerHTML =
+    `<h3>Criterios de visibilidad${m.exact ? "" : " (aproximados en rangos parciales)"}</h3><table>` +
+    row("Sol · centro del disco", m.pct_sun) + row("Sol · energía (ponderada por área)", m.sun_energy_pct) +
+    row("Sol · algún pedazo", m.pct_sun_any) + row("Sol · completo", m.pct_sun_full) +
+    row("Tierra · centro del disco", m.pct_earth) + row("Tierra · algún pedazo", m.pct_earth_any) +
+    row("Tierra · disco completo", m.pct_earth_full) + row("Sol y Tierra a la vez (centro)", m.pct_both) +
+    `</table><h3>Modelo topográfico</h3><table>` +
+    txt("DEM", s.meta.dem) + txt("Resolución", `${s.meta.pixel_m} m/px`) + txt("Radio del horizonte", `${s.meta.radius_km} km`) +
+    txt("Azimuts", s.meta.n_azimuths) + txt("Altura del observador", `${s.meta.observer_height_m} m`) +
+    txt("Rayos truncados por el borde del DEM", `${s.meta.truncated_pct ?? "n/d"}%`) + txt("Azimuts sin dato", s.meta.horizon_gaps) +
+    `</table><a class="cta small" href="data/${s._file}" download>Descargar JSON crudo</a>`;
+}
+
+function render() {
+  const s = S.cur;
+  pano.update(s, S.i, S.b);
+  timeline.setCursor(S.i);
+  $("when").textContent = fmtUTC(timeOf(s, S.i));
+  const st = (n, bd) => `${n}: ${bd.visible[S.i] ? "visible" : "no visible"} · az ${bd.az[S.i].toFixed(1)}° · el ${bd.el[S.i].toFixed(2)}°`;
+  $("now").textContent = `${st("Sol", s.sun)}  |  ${st("Tierra", s.earth)}`;
+}
+
+function play() {
+  if (S.timer) { clearInterval(S.timer); S.timer = null; $("play").textContent = "▶"; return; }
+  const step = Math.max(1, Math.round(6 / S.cur.step_h));   // 6 h por cuadro
+  $("play").textContent = "⏸";
+  S.timer = setInterval(() => { S.i += step; if (S.i >= S.b) S.i = S.a; $("time").value = S.i; render(); }, 50);
+}
+
+function seek(i) { S.i = i; $("time").value = i; render(); }
 
 async function init() {
+  if (typeof d3 === "undefined") return showError("No cargó D3 (sin internet o bloqueado por la red). Descárgalo con: curl -o web/js/d3.min.js https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js y en index.html cambia el <script> de D3 por js/d3.min.js");
+  const need = ["map", "tl", "panorama", "kpis", "science", "cmp-b", "cmp-t", "dlg", "start", "end", "time", "play", "when", "now", "active", "sci", "open-cmp", "cmp", "s-name", "s-info", "s-note", "year", "month"];
+  const missing = need.filter((id) => !$(id));
+  if (missing.length) return showError(`Tu index.html no es la versión nueva: faltan los elementos ${missing.join(", ")}. Reemplaza también index.html y css/style.css.`);
   try {
-    state.index = await loadIndex();
+    const idx = await loadIndex();
+    S.sites = await Promise.all(idx.map(async (e) => Object.assign(await loadSite(e.file), { _file: e.file })));
   } catch (err) {
-    showError(err.message);
+    return showError(`No pude cargar los datos (${err.message}). Sirve la carpeta web con: cd web && python -m http.server 8000`);
+  }
+  pano = createPanorama($("panorama"));
+  map = createMap($("map"), pick);
+  timeline = createTimeline($("tl"), seek);
+  compare = createCompare(S.sites, metricsOf);
+
+  const { min, max } = dateBounds(S.sites[0]);
+  S.min = min; S.max = max;
+  for (const id of ["start", "end"]) { $(id).min = min; $(id).max = max; }
+  $("start").value = min; $("end").value = max;
+
+  // Selectores de año y mes: se llenan con lo que realmente cubren los datos
+  // Selectores de año y mes
+  const [y0] = S.min.split("-").map(Number);
+  const [y1] = S.max.split("-").map(Number);
+
+  // Años disponibles
+  for (let y = y0; y <= y1; y++) {
+    $("year").add(new Option(String(y), y));
+  }
+
+  // Opción para rangos personalizados
+  $("year").add(new Option("Personalizado", "custom"));
+  $("month").add(new Option("Personalizado", "custom"));
+  
+  // Meses disponibles
+  MES.forEach((mes, i) => {
+   const nombre = mes.charAt(0).toUpperCase() + mes.slice(1);
+   $("month").add(new Option(nombre, i + 1));
+  });
+
+  // Selección de año
+  $("year").onchange = () => {
+   const y = $("year").value;
+
+   if (y === "all") {
+     $("month").value = "all";
+     setRange(S.min, S.max);
+     return;
+   }
+
+  if (y === "custom") return;
+
+  updateMonthAvailability(y);
+
+  const m = $("month").value;
+
+  if (m !== "all" && m !== "custom") {
+    const [s, e] = periodRange(Number(y), Number(m));
+    setRange(s, e);
+  } else {
+    $("month").value = "all";
+    const [s, e] = periodRange(Number(y));
+    setRange(s, e);
+  }
+};
+
+// Selección de mes
+$("month").onchange = () => {
+  const y = $("year").value;
+  const m = $("month").value;
+
+  if (y === "all" || y === "custom") return;
+  if (m === "custom") return;
+
+  if (m === "all") {
+    const [s, e] = periodRange(Number(y));
+    setRange(s, e);
     return;
   }
 
-  const select = $("site");
-  state.index.forEach((s, i) => {
-    const opt = document.createElement("option");
-    opt.value = i;
-    opt.textContent = s.name;
-    select.appendChild(opt);
-  });
+  const [s, e] = periodRange(Number(y), Number(m));
+  setRange(s, e);
+};
 
-  select.addEventListener("change", () => selectSite(Number(select.value)));
-  $("from").addEventListener("change", render);
-  $("to").addEventListener("change", render);
-  $("reset").addEventListener("click", () => {
-    if (!state.bounds) return;
-    $("from").value = state.bounds[0];
-    $("to").value = state.bounds[1];
-    render();
-  });
+// Cambios manuales de fechas
+$("start").onchange = $("end").onchange = applyRange;
+  $("play").onclick = play;
+  $("open-cmp").onclick = $("cmp").onclick = () => compare.open(S.cur);
 
-  state.pano = new Panorama($("pano-svg"));
-  state.timeline = new Timeline($("timeline"), (i) => {
-    stop();
-    state.t = i;
-    drawTime();
-  });
-  $("play").addEventListener("click", togglePlay);
-  $("t").addEventListener("input", (e) => {
-    stop();
-    state.t = Number(e.target.value);
-    drawTime();
-  });
-
-  await selectSite(0);
+  let bg = null;   // relieve de fondo, opcional
+  try { const r = await fetch("data/map.json"); if (r.ok) bg = { ...(await r.json()), href: "data/map.png" }; } catch { /* sin fondo */ }
+  map.draw(S.sites, bg);
+  pick(S.sites[0]);
 }
-
 init();

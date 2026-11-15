@@ -1,166 +1,73 @@
-// Panorama del horizonte: azimut (x, 0° = norte, hacia el este) contra elevación (y).
-// Se usa azimut-elevación y no un polar redondo porque Sol y Tierra nunca pasan de
-// ~15° sobre el horizonte y en un círculo quedarían aplastados contra el borde.
-// El terreno se dibuja ENCIMA de Sol y Tierra, con algo de transparencia: un astro
-// tapado se ve tenue detrás de la montaña.
-
-const NS = "http://www.w3.org/2000/svg";
-const W = 900;
-const H = 380;
-const M = { l: 44, r: 16, t: 14, b: 30 };
+// Panorama del horizonte: azimut (x) vs elevación (y). El terreno se dibuja encima de Sol y Tierra.
+const W = 960, H = 380;
+const M = { top: 14, right: 16, bottom: 34, left: 46 };
 const TRAIL_DAYS = 30;
-const TRAIL_STEP_H = 6;
-const FULL = 0.9999;
-const CARDINALS = ["N", "NE", "E", "SE", "S", "SO", "O", "NO", "N"];
-const BODIES = { sun: "Sol", earth: "Tierra" };
+const DIRS = { 0: "N", 45: "NE", 90: "E", 135: "SE", 180: "S", 225: "SO", 270: "O", 315: "NO", 360: "N" };
 
-function el(tag, attrs, parent) {
-  const node = document.createElementNS(NS, tag);
-  for (const [k, v] of Object.entries(attrs || {})) node.setAttribute(k, v);
-  if (parent) parent.appendChild(node);
-  return node;
-}
+export function createPanorama(root) {
+  const svg = d3.select(root).append("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("width", "100%")
+    .attr("role", "img").attr("aria-label", "Horizonte del sitio con la posición del Sol y de la Tierra");
+  svg.append("defs").append("clipPath").attr("id", "plot-clip").append("rect")
+    .attr("x", M.left).attr("y", M.top).attr("width", W - M.left - M.right).attr("height", H - M.top - M.bottom);
 
-export class Panorama {
-  constructor(container) {
-    this.svg = el("svg", {
-      viewBox: `0 0 ${W} ${H}`,
-      role: "img",
-      "aria-label": "Panorama del horizonte con la posición del Sol y de la Tierra",
-    });
-    container.replaceChildren(this.svg);
-    this.d = null;
+  const x = d3.scaleLinear([0, 360], [M.left, W - M.right]);
+  const y = d3.scaleLinear([-10, 15], [H - M.bottom, M.top]);
+  const line = d3.line().x((p) => x(p[0])).y((p) => y(p[1]));
+
+  const gGrid = svg.append("g");
+  const plot = svg.append("g").attr("clip-path", "url(#plot-clip)");
+  const sunTrail = plot.append("path").attr("class", "trail sun");
+  const earthTrail = plot.append("path").attr("class", "trail earth");
+  const sunDot = plot.append("circle").attr("r", 6).attr("class", "body sun");
+  const earthDot = plot.append("circle").attr("r", 9).attr("class", "body earth");
+  const gTerrain = svg.append("g");
+  const gAxes = svg.append("g");
+
+  function setSite(site) {
+    const hv = site.horizon.filter((v) => v !== null);
+    const lo = Math.min(d3.min(site.earth.el), d3.min(site.sun.el), d3.min(hv) ?? 0, -2) - 1;
+    const hi = Math.max(d3.max(site.earth.el), d3.max(site.sun.el), d3.max(hv) ?? 0, 4) + 2;
+    y.domain([lo, hi]);
+    for (const g of [gGrid, gTerrain, gAxes]) g.selectAll("*").remove();
+
+    gGrid.selectAll("line.v").data(d3.range(0, 361, 45)).join("line").attr("class", "v")
+      .attr("x1", (d) => x(d)).attr("x2", (d) => x(d)).attr("y1", M.top).attr("y2", H - M.bottom);
+    gGrid.append("line").attr("class", "zero").attr("x1", M.left).attr("x2", W - M.right).attr("y1", y(0)).attr("y2", y(0));
+
+    const pts = site.horizon.map((el, k) => ({ az: (k * 360) / site.horizon.length, el }));
+    pts.push({ az: 360, el: site.horizon[0] });
+    gTerrain.append("path").datum(pts).attr("class", "terrain")
+      .attr("d", d3.area().defined((p) => p.el !== null).x((p) => x(p.az)).y0(y(lo)).y1((p) => y(p.el)));
+    gTerrain.append("path").datum(pts).attr("class", "ridge")
+      .attr("d", d3.line().defined((p) => p.el !== null).x((p) => x(p.az)).y((p) => y(p.el)));
+
+    gAxes.append("g").attr("transform", `translate(0,${H - M.bottom})`)
+      .call(d3.axisBottom(x).tickValues(d3.range(0, 361, 45)).tickFormat((d) => `${DIRS[d]} ${d}°`));
+    gAxes.append("g").attr("transform", `translate(${M.left},0)`).call(d3.axisLeft(y).ticks(8).tickFormat((d) => `${d}°`));
   }
 
-  x(az) {
-    return M.l + (az / 360) * (W - M.l - M.r);
-  }
-
-  y(elev) {
-    return M.t + ((this.ymax - elev) / (this.ymax - this.ymin)) * (H - M.t - M.b);
-  }
-
-  // Dibuja todo lo que no cambia con el tiempo (ejes, terreno) para un sitio.
-  setSite(d) {
-    this.d = d;
-    [this.ymin, this.ymax] = this.#elevationRange(d);
-    this.svg.replaceChildren();
-
-    const defs = el("defs", {}, this.svg);
-    const clip = el("clipPath", { id: "pano-clip" }, defs);
-    el("rect", { x: M.l, y: M.t, width: W - M.l - M.r, height: H - M.t - M.b }, clip);
-
-    this.#grid();
-
-    const plot = el("g", { "clip-path": "url(#pano-clip)" }, this.svg);
-    this.trails = {};
-    this.dots = {};
-    for (const key of Object.keys(BODIES)) {
-      this.trails[key] = el("path", { class: `trail ${key}` }, plot);
+  // Trayectoria como un path; se corta cuando el azimut salta de 360° a 0°
+  function trailD(body, a, b) {
+    let d = "", seg = [];
+    const flush = () => { if (seg.length > 1) d += line(seg); seg = []; };
+    for (let k = a; k < b; k++) {
+      if (seg.length && Math.abs(body.az[k] - body.az[k - 1]) > 180) flush();
+      seg.push([body.az[k], body.el[k]]);
     }
-    for (const [key, name] of Object.entries(BODIES)) {
-      const g = el("g", {}, plot);
-      const circle = el("circle", { class: `dot ${key}`, r: 7 }, g);
-      const label = el("text", { class: "dot-label" }, g);
-      label.textContent = name;
-      this.dots[key] = { circle, label };
-    }
-
-    this.#terrain(plot);
-    this.#axisLabels();
+    flush();
+    return d;
   }
 
-  // Mueve Sol y Tierra al instante i (índice del array) y redibuja su estela.
-  setTime(i) {
-    const d = this.d;
-    if (!d) return;
-    for (const key of Object.keys(BODIES)) {
-      const b = d[key];
-      const f = b.fraction ? b.fraction[i] : b.visible[i] ? 1 : 0;
-      const px = this.x(b.az[i]);
-      const py = this.y(b.el[i]);
-      const { circle, label } = this.dots[key];
+  const place = (dot, body, i) => dot.attr("cx", x(body.az[i])).attr("cy", y(body.el[i])).classed("hidden", body.visible[i] !== 1);
 
-      circle.setAttribute("cx", px.toFixed(1));
-      circle.setAttribute("cy", py.toFixed(1));
-      circle.setAttribute("fill-opacity", f >= FULL ? 1 : f > 0 ? 0.5 : 0); // lleno, parcial, hueco
-
-      const flip = px > W - 70;
-      label.setAttribute("x", (px + (flip ? -11 : 11)).toFixed(1));
-      label.setAttribute("y", (py + 4).toFixed(1));
-      label.setAttribute("text-anchor", flip ? "end" : "start");
-
-      this.trails[key].setAttribute("d", this.#trail(b, i));
-    }
+  // i: instante actual; end: fin (exclusivo) del rango elegido
+  function update(site, i, end) {
+    const stop = Math.min(end, i + Math.round((TRAIL_DAYS * 24) / site.step_h));
+    sunTrail.attr("d", trailD(site.sun, i, stop));
+    earthTrail.attr("d", trailD(site.earth, i, stop));
+    place(sunDot, site.sun, i);
+    place(earthDot, site.earth, i);
   }
 
-  #elevationRange(d) {
-    let lo = 0;
-    let hi = 0;
-    const scan = (arr) => {
-      for (const v of arr) {
-        if (v == null) continue;
-        if (v < lo) lo = v;
-        if (v > hi) hi = v;
-      }
-    };
-    scan(d.sun.el);
-    scan(d.earth.el);
-    scan(d.horizon);
-    return [Math.floor(lo - 1), Math.ceil(hi + 1)];
-  }
-
-  #grid() {
-    const range = this.ymax - this.ymin;
-    const step = range > 30 ? 10 : range > 14 ? 5 : 2;
-    for (let v = Math.ceil(this.ymin / step) * step; v <= this.ymax; v += step) {
-      el("line", { class: v === 0 ? "zero" : "grid", x1: this.x(0), x2: this.x(360), y1: this.y(v), y2: this.y(v) }, this.svg);
-      const t = el("text", { x: M.l - 6, y: this.y(v) + 4, "text-anchor": "end" }, this.svg);
-      t.textContent = `${v}°`;
-    }
-    for (let k = 0; k <= 8; k++) {
-      el("line", { class: "grid", x1: this.x(k * 45), x2: this.x(k * 45), y1: this.y(this.ymax), y2: this.y(this.ymin) }, this.svg);
-    }
-  }
-
-  #axisLabels() {
-    for (let k = 0; k <= 8; k++) {
-      const t = el("text", { x: this.x(k * 45), y: H - 10, "text-anchor": "middle" }, this.svg);
-      t.textContent = CARDINALS[k];
-    }
-  }
-
-  #terrain(parent) {
-    const h = this.d.horizon;
-    const n = h.length;
-    let line = "";
-    for (let k = 0; k <= n; k++) {
-      const az = (k * 360) / n;
-      const v = h[k % n] ?? 0; // sin dato se trata como horizonte plano, igual que en Python
-      line += `${k ? "L" : "M"}${this.x(az).toFixed(1)} ${this.y(v).toFixed(1)}`;
-    }
-    const area = `${line}L${this.x(360).toFixed(1)} ${this.y(this.ymin).toFixed(1)}L${this.x(0).toFixed(1)} ${this.y(this.ymin).toFixed(1)}Z`;
-    el("path", { class: "terrain", d: area }, parent);
-    el("path", { class: "ridge", d: line }, parent);
-  }
-
-  // Estela de los últimos TRAIL_DAYS días hasta el instante i; se corta al cruzar 360°→0°.
-  #trail(b, i) {
-    const d = this.d;
-    const stride = Math.max(1, Math.round(TRAIL_STEP_H / d.step_h));
-    const from = Math.max(0, i - Math.round((TRAIL_DAYS * 24) / d.step_h));
-    const idx = [];
-    for (let j = i; j >= from; j -= stride) idx.push(j);
-    idx.reverse();
-
-    let path = "";
-    let prevAz = null;
-    for (const j of idx) {
-      const az = b.az[j];
-      const pt = `${this.x(az).toFixed(1)} ${this.y(b.el[j]).toFixed(1)}`;
-      path += prevAz === null || Math.abs(az - prevAz) > 180 ? `M${pt}` : `L${pt}`;
-      prevAz = az;
-    }
-    return path;
-  }
+  return { setSite, update };
 }
