@@ -38,24 +38,33 @@ El proyecto está dividido en dos partes principales:
 
 ```mermaid
 flowchart TD
-    A[Fuentes NASA / JPL] --> B[Datos locales: DEM y kernels]
-    C[data/sitios.json] --> D[DataImporter]
+    A["Fuentes NASA / JPL"] --> B["Datos locales: DEM y kernels"]
+    C["data/sitios.json"] --> D["DataImporter"]
     B --> D
-    D --> E[DemLoader y KernelManager]
-    E --> F[Recortes DEM: data/interim/*.npz]
-    F --> G[HorizonMask]
-    E --> H[Ephemeris: SPICE]
-    G --> I[MetricsCalculator]
+
+    D --> E["DemLoader y KernelManager"]
+
+    E --> F["Recortes DEM: data/interim/*.npz"]
+    F --> G["HorizonMask"]
+
+    E --> H["Ephemeris: SPICE"]
+
+    G --> I["MetricsCalculator"]
     H --> I
-    I --> J[SiteResult]
-    J --> K[web/data/sites/*.json]
-    J --> L[web/data/sites.json]
-    B --> M[pipeline.export_map]
-    M --> N[web/data/map.png + map.json]
-    K --> O[Frontend JavaScript]
+
+    I --> J["SiteResult"]
+
+    J --> K["web/data/sites/*.json"]
+    J --> L["web/data/sites.json"]
+
+    B --> M["pipeline.export_map"]
+    M --> N["web/data/map.png + map.json"]
+
+    K --> O["Frontend JavaScript"]
     L --> O
     N --> O
-    O --> P[Mapa, panorama, timeline y comparador]
+
+    O --> P["Mapa, panorama, timeline y comparador"]
 ```
 
 ### 2.1 Estructura del repositorio
@@ -212,118 +221,136 @@ El siguiente diagrama resume las clases y dependencias observadas en el código 
 ```mermaid
 classDiagram
     class Config {
-      +Path raw_dir
-      +Path interim_dir
-      +Path sites_file
-      +Path out_dir
-      +str dem_file
-      +tuple kernel_files
-      +float radius_km
-      +float step_hours
-      +int n_azimuths
-      +float observer_height_m
-      +str start_utc
-      +int days
-      +dem_path() Path
+        +Path raw_dir
+        +Path interim_dir
+        +Path sites_file
+        +Path out_dir
+        +str dem_file
+        +tuple kernel_files
+        +float radius_km
+        +float step_hours
+        +int n_azimuths
+        +float observer_height_m
+        +str start_utc
+        +int days
+        +dem_path() Path
     }
+
     class DataImporter {
-      -Config config
-      +import_all(verify) ImportedData
+        -Config config
+        +import_all(verify) ImportedData
     }
+
     class ImportedData {
-      +Config config
-      +list sites
-      +KernelManager kernels
-      +DemLoader dem
-      +get_patch(site, use_cache) DemPatch
-      +close()
+        +Config config
+        +list sites
+        +KernelManager kernels
+        +DemLoader dem
+        +get_patch(site, use_cache) DemPatch
+        +close()
     }
+
     class SiteLoader {
-      +validate(site)
-      +load(path) list~Site~
+        +validate(site)
+        +load(path) list~Site~
     }
+
     class Site {
-      +str name
-      +float lat
-      +float lon
-      +str note
+        +str name
+        +float lat
+        +float lon
+        +str note
     }
+
     class KernelManager {
-      +check_files() list~Path~
-      +load_all()
-      +verify() float
-      +unload_all()
+        +check_files() list~Path~
+        +load_all()
+        +verify() float
+        +unload_all()
     }
+
     class DemLoader {
-      +open()
-      +close()
-      +lonlat_to_xy(lat, lon)
-      +crop(site, radius_km) DemPatch
-      +save_patch(patch, path)
-      +load_patch(path) DemPatch
+        +open()
+        +close()
+        +lonlat_to_xy(lat, lon)
+        +crop(site, radius_km) DemPatch
+        +save_patch(patch, path)
+        +load_patch(path) DemPatch
     }
+
     class DemPatch {
-      +ndarray elevation
-      +float pixel_m
-      +tuple site_px
-      +float radius_km
-      +sample(col, row) float
-      +site_height float
+        +ndarray elevation
+        +float pixel_m
+        +tuple site_px
+        +float radius_km
+        +sample(col, row) float
+        +site_height float
     }
+
     class Ephemeris {
-      +time_grid(start_utc, days, step_hours) ndarray
-      +to_utc(ets) list
-      +observe(target, site, ets, height_m) ndarray
-      +angular_radius_deg(target, dist_km) ndarray
+        +time_grid(start_utc, days, step_hours) ndarray
+        +to_utc(ets) list
+        +observe(target, site, ets, height_m) ndarray
+        +angular_radius_deg(target, dist_km) ndarray
     }
+
     class HorizonMask {
-      +ndarray el_deg
-      +elevation_at(az_deg)
-      +to_list() list
-      +compute(patch, n_az, observer_height_m) HorizonMask
+        +ndarray el_deg
+        +elevation_at(az_deg)
+        +to_list() list
+        +compute(patch, n_az, observer_height_m) HorizonMask
     }
+
     class MetricsCalculator {
-      +visible(azel, mask, body_radius_deg) ndarray
-      +visible_fraction(azel, mask, radius_deg) ndarray
-      +summarize(sun_vis, earth_vis, step_h) dict
-      +summarize_disk(sun_frac, earth_frac) dict
+        +visible(azel, mask, body_radius_deg) ndarray
+        +visible_fraction(azel, mask, radius_deg) ndarray
+        +summarize(sun_vis, earth_vis, step_h) dict
+        +summarize_disk(sun_frac, earth_frac) dict
     }
+
     class Pipeline {
-      +Config config
-      +MetricsCalculator calc
-      +run() list~SiteResult~
-      +save(results) Path
+        +Config config
+        +MetricsCalculator calc
+        +run() list~SiteResult~
+        +save(results) Path
     }
+
     class SiteResult {
-      +Site site
-      +str t0_utc
-      +float step_h
-      +HorizonMask horizon
-      +ndarray sun_azel
-      +ndarray earth_azel
-      +ndarray sun_visible
-      +ndarray earth_visible
-      +dict metrics
-      +dict meta
-      +to_dict() dict
-      +to_json(path)
+        +Site site
+        +str t0_utc
+        +float step_h
+        +HorizonMask horizon
+        +ndarray sun_azel
+        +ndarray earth_azel
+        +ndarray sun_visible
+        +ndarray earth_visible
+        +dict metrics
+        +dict meta
+        +to_dict() dict
+        +to_json(path)
     }
+
     DataImporter --> Config
     DataImporter ..> SiteLoader : utiliza
     DataImporter ..> KernelManager : crea y carga
     DataImporter ..> DemLoader : crea y abre
+
     SiteLoader ..> Site : construye
-    DemLoader ..> DemPatch : recorta / guarda
+
+    DemLoader ..> DemPatch : recorta y guarda
+
     ImportedData o-- Site
     ImportedData o-- KernelManager
     ImportedData o-- DemLoader
-    ImportedData ..> DemPatch : obtiene caché
+    ImportedData ..> DemPatch : obtiene cache
+
     Pipeline --> Config
     Pipeline --> MetricsCalculator
     Pipeline ..> DataImporter : importa recursos
     Pipeline ..> Ephemeris : calcula posiciones
     Pipeline ..> HorizonMask : calcula horizonte
     Pipeline ..> SiteResult : produce
+
     SiteResult --> Site
     SiteResult --> HorizonMask
 ```
