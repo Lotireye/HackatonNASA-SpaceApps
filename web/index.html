@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lunar Landing Site Navigator</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="top">
+  <b>🌓 Lunar Landing Site Navigator</b>
+  <button id="open-cmp" class="link" type="button">⚖️ Comparar sitios</button>
+</header>
+
+<section class="hero">
+  <h1>Navegador de sitios de alunizaje: Polo Sur Lunar</h1>
+  <p>Evalúa la disponibilidad de energía solar y comunicación directa con la Tierra en las regiones candidatas de Artemis.</p>
+  <a class="cta" href="#explorer">Seleccionar sitio de aterrizaje ↓</a>
+</section>
+
+<main>
+  <p id="error" class="error" hidden></p>
+
+  <section id="explorer" class="explorer">
+    <div class="box"><svg id="map" viewBox="0 0 600 600" role="img" aria-label="Mapa polar del polo sur lunar con los sitios candidatos"></svg></div>
+    <aside class="box side">
+      <h2 id="s-name"></h2>
+      <p id="s-info" class="muted"></p>
+      <p id="s-note" class="muted"></p>
+      <div class="period-filters">
+
+  <div class="filter-heading">
+    <span>📅 Periodo de análisis</span>
+    <small>Selecciona el año y el mes</small>
+  </div>
+  <div class="filter-selects">
+    <label>
+      Año
+      <select id="year" aria-label="Seleccionar año">
+        <option value="all">Todos los años</option>
+      </select>
+    </label>
+
+    <label>
+      Mes
+      <select id="month" aria-label="Seleccionar mes">
+        <option value="all">Todos los meses</option>
+      </select>
+    </label>
+  </div>
+  <div class="filter-dates">
+    <span>Rango de fechas</span>
+    <div class="dates">
+      <label>
+        Desde
+        <input type="date" id="start">
+      </label>
+      <label>
+        Hasta
+        <input type="date" id="end">
+      </label>
+    </div>
+  </div>
+</div>
+<a class="cta small" href="#dash">Analizar sitio ↓</a> 
+    </aside>
+  </section>
+  <section id="dash">
+    <div class="bar">
+      <span id="active"></span>
+      <label class="switch"><span>👁️ Explorador</span><input type="checkbox" id="sci"><i></i><span>🔬 Científica</span></label>
+      <button id="cmp" class="link" type="button">⚖️ Comparar con otro sitio</button>
+    </div>
+    <div id="kpis" class="kpis"></div>
+    <div class="box">
+      <h3>Panorama de horizonte</h3>
+      <div id="panorama"></div>
+      <div class="legend"><span class="k sun">Sol</span><span class="k earth">Tierra</span><span class="k terrain">Terreno</span>
+        <span class="muted">Marcador hueco = tapado por el terreno. Tamaños no a escala. Línea fina = próximos 30 días.</span></div>
+    </div>
+    <div class="box">
+      <h3>Línea de tiempo y simulador</h3>
+      <div class="tlwrap"><div class="tllab"><span>☀️ Luz solar</span><span>🌍 Tierra</span></div>
+        <svg id="tl" viewBox="0 0 1000 44" preserveAspectRatio="none" role="img" aria-label="Disponibilidad de luz solar y comunicación con la Tierra en el rango elegido"></svg></div>
+      <div class="timebar"><button id="play" class="round" type="button" aria-label="Reproducir">▶</button>
+        <input id="time" type="range" step="1" value="0"><output id="when"></output></div>
+      <p id="now" class="muted"></p>
+    </div>
+    <div id="science" class="box sci"></div>
+  </section>
+</main>
+
+<dialog id="dlg"><form method="dialog">
+  <h3>Comparar sitios (mismo rango de fechas)</h3>
+  <label>Con <select id="cmp-b"></select></label>
+  <table id="cmp-t"></table>
+  <button class="cta small">Cerrar</button>
+</form></dialog>
+
+<script>
+addEventListener("error", (e) => {
+  const p = document.getElementById("error");
+  if (!p) return;
+  p.textContent = e.message ? `Error de JavaScript: ${e.message}` : `No se pudo cargar: ${(e.target && (e.target.src || e.target.href)) || "un archivo"}`;
+  p.hidden = false;
+}, true);
+</script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
