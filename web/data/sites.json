@@ -6,16 +6,16 @@
   "note": "Centro del macizo (USGS Gazetteer, LOLA 2011). Regi\u00f3n candidata Artemis III.",
   "file": "sites/mons-malapert.json",
   "metrics": {
-   "pct_sun": 36.77,
+   "pct_sun": 35.73,
    "pct_earth": 100.0,
-   "pct_both": 36.77,
-   "max_dark_h": 490.0,
+   "pct_both": 35.73,
+   "max_dark_h": 489.0,
    "max_no_earth_h": 0.0,
-   "sun_energy_pct": 36.82,
-   "pct_sun_any": 38.33,
-   "pct_sun_full": 35.49,
+   "sun_energy_pct": 35.82,
+   "pct_sun_any": 37.31,
+   "pct_sun_full": 34.49,
    "pct_earth_any": 100.0,
-   "pct_earth_full": 88.57
+   "pct_earth_full": 91.74
   }
  },
  {
@@ -28,8 +28,8 @@
    "pct_sun": 0.0,
    "pct_earth": 0.0,
    "pct_both": 0.0,
-   "max_dark_h": 43824.0,
-   "max_no_earth_h": 43824.0,
+   "max_dark_h": 8760.0,
+   "max_no_earth_h": 8760.0,
    "sun_energy_pct": 0.0,
    "pct_sun_any": 0.0,
    "pct_sun_full": 0.0,
@@ -47,8 +47,8 @@
    "pct_sun": 0.0,
    "pct_earth": 0.0,
    "pct_both": 0.0,
-   "max_dark_h": 43824.0,
-   "max_no_earth_h": 43824.0,
+   "max_dark_h": 8760.0,
+   "max_no_earth_h": 8760.0,
    "sun_energy_pct": 0.0,
    "pct_sun_any": 0.0,
    "pct_sun_full": 0.0,
@@ -66,10 +66,10 @@
    "pct_sun": 0.0,
    "pct_earth": 0.0,
    "pct_both": 0.0,
-   "max_dark_h": 43824.0,
-   "max_no_earth_h": 43824.0,
-   "sun_energy_pct": 0.02,
-   "pct_sun_any": 0.12,
+   "max_dark_h": 8760.0,
+   "max_no_earth_h": 8760.0,
+   "sun_energy_pct": 0.01,
+   "pct_sun_any": 0.11,
    "pct_sun_full": 0.0,
    "pct_earth_any": 0.0,
    "pct_earth_full": 0.0
@@ -82,16 +82,16 @@
   "note": "Centro del cr\u00e1ter (IAU Transactions XXII B). Candidata Artemis III: Nobile Rim 1 y 2.",
   "file": "sites/nobile.json",
   "metrics": {
-   "pct_sun": 32.39,
-   "pct_earth": 19.74,
-   "pct_both": 6.51,
-   "max_dark_h": 544.0,
+   "pct_sun": 32.17,
+   "pct_earth": 16.45,
+   "pct_both": 4.94,
+   "max_dark_h": 542.0,
    "max_no_earth_h": 556.0,
-   "sun_energy_pct": 32.37,
-   "pct_sun_any": 33.87,
-   "pct_sun_full": 30.78,
-   "pct_earth_any": 26.7,
-   "pct_earth_full": 8.21
+   "sun_energy_pct": 32.18,
+   "pct_sun_any": 33.7,
+   "pct_sun_full": 30.72,
+   "pct_earth_any": 23.65,
+   "pct_earth_full": 1.39
   }
  },
  {
@@ -101,16 +101,16 @@
   "note": "Ubicaci\u00f3n aproximada del cr\u00e1ter Cabeus B (the-moon.us, nombre no oficial). Candidata Artemis III: Peak near Cabeus B.",
   "file": "sites/cabeus-b.json",
   "metrics": {
-   "pct_sun": 6.05,
-   "pct_earth": 25.07,
-   "pct_both": 2.03,
-   "max_dark_h": 4928.0,
-   "max_no_earth_h": 567.0,
-   "sun_energy_pct": 6.07,
-   "pct_sun_any": 7.8,
-   "pct_sun_full": 4.27,
-   "pct_earth_any": 31.85,
-   "pct_earth_full": 15.35
+   "pct_sun": 6.02,
+   "pct_earth": 30.29,
+   "pct_both": 2.53,
+   "max_dark_h": 4922.0,
+   "max_no_earth_h": 458.0,
+   "sun_energy_pct": 6.12,
+   "pct_sun_any": 8.14,
+   "pct_sun_full": 4.1,
+   "pct_earth_any": 34.52,
+   "pct_earth_full": 25.72
   }
  }
 ]

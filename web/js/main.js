@@ -176,7 +176,12 @@ async function init() {
   map = createMap($("map"), pick);
   timeline = createTimeline($("tl"), seek);
   compare = createCompare(S.sites, metricsOf);
-
+  $("sci").addEventListener("change", (e) => {
+      document.body.classList.toggle(
+          "sci-on",
+          e.target.checked
+      );
+  });
   const { min, max } = dateBounds(S.sites[0]);
   S.min = min; S.max = max;
   for (const id of ["start", "end"]) { $(id).min = min; $(id).max = max; }
