@@ -9,6 +9,49 @@ topográfico local.
 en un DEM, efemérides SPICE y un modelo de horizonte. No constituyen una certificación
 de seguridad de aterrizaje ni sustituyen un análisis de ingeniería de misión.
 
+## 📑 Índice
+
+- [1. Objetivo y funcionalidades](#1-objetivo-y-funcionalidades)
+- [2. Arquitectura general](#2-arquitectura-general)
+  - [2.1 Estructura del repositorio](#21-estructura-del-repositorio)
+- [3. Fuentes de datos](#3-fuentes-de-datos)
+  - [3.1 Modelo digital de elevación (DEM)](#31-modelo-digital-de-elevacion-dem)
+  - [3.2 Catálogo de sitios](#32-catalogo-de-sitios)
+  - [3.3 Kernels SPICE](#33-kernels-spice)
+- [4. Modelo de clases del pipeline](#4-modelo-de-clases-del-pipeline)
+  - [4.1 Responsabilidad de los módulos](#41-responsabilidad-de-los-modulos)
+- [5. Proceso de importación y procesamiento](#5-proceso-de-importacion-y-procesamiento)
+  - [5.1 Importación de recursos](#51-importacion-de-recursos)
+  - [5.2 Recorte y caché del DEM](#52-recorte-y-cache-del-dem)
+  - [5.3 Cálculo del horizonte](#53-calculo-del-horizonte)
+  - [5.4 Cálculo de efemérides](#54-calculo-de-efemerides)
+  - [5.5 Visibilidad y métricas](#55-visibilidad-y-metricas)
+- [6. Formatos de datos y transferencia entre archivos](#6-formatos-de-datos-y-transferencia-entre-archivos)
+  - [6.1 Flujo de archivos](#61-flujo-de-archivos)
+  - [6.2 Tabla de entradas y salidas](#62-tabla-de-entradas-y-salidas)
+  - [6.3 Estructura del archivo NPZ](#63-estructura-del-archivo-npz)
+  - [6.4 Estructura del JSON por sitio](#64-estructura-del-json-por-sitio)
+  - [6.5 Índice web/data/sites.json](#65-indice-webdatasitesjson)
+  - [6.6 Archivos del mapa](#66-archivos-del-mapa)
+- [7. Diagrama de secuencia del procesamiento](#7-diagrama-de-secuencia-del-procesamiento)
+- [8. Diagramas de componentes del frontend](#8-diagramas-de-componentes-del-frontend)
+- [9. Instalación y ejecución](#9-instalacion-y-ejecucion)
+  - [9.1 Requisitos](#91-requisitos)
+  - [9.2 Preparar el entorno](#92-preparar-el-entorno)
+  - [9.3 Verificar importación de datos y kernels](#93-verificar-importacion-de-datos-y-kernels)
+  - [9.4 Ejecutar el pipeline](#94-ejecutar-el-pipeline)
+  - [9.5 Exportar el mapa de relieve](#95-exportar-el-mapa-de-relieve)
+  - [9.6 Abrir la aplicación web](#96-abrir-la-aplicacion-web)
+  - [9.7 Ejecutar pruebas](#97-ejecutar-pruebas)
+- [10. Parámetros predeterminados del pipeline](#10-parametros-predeterminados-del-pipeline)
+- [11. Análisis de sensibilidad](#11-analisis-de-sensibilidad)
+- [12. Pruebas y validaciones](#12-pruebas-y-validaciones)
+- [13. Consideraciones, límites y verificaciones pendientes](#13-consideraciones-limites-y-verificaciones-pendientes)
+  - [13.1 Diferencia entre la configuración y los JSON incluidos](#131-diferencia-entre-la-configuracion-y-los-json-incluidos)
+- [14. Tecnologías utilizadas](#14-tecnologias-utilizadas)
+- [15. Referencias](#15-referencias)
+- [16. Anexos](#16-anexos)
+
 ## 1. Objetivo y funcionalidades
 
 El proyecto busca ayudar a comparar condiciones relevantes para una misión lunar:
